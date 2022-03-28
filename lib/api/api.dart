@@ -17,7 +17,7 @@ class Api {
   }
 
   void setColor(Color color, int index) {
-    final colorValue = ((color.value & 0xFFFFFF) << 8) + index;
+    final colorValue = ((color.value & 0xFFFFFF) << 8) + index + 1;
     final route = "http://$host/color?$colorValue";
     get(Uri.parse(route));
   }
