@@ -1,6 +1,9 @@
+// ignore_for_file: unused_local_variable
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:point_in_polygon/point_in_polygon.dart';
 
 class PanelDrawerWidget extends StatelessWidget {
   const PanelDrawerWidget({Key? key, required this.onSelect, required this.selectedIndex}) : super(key: key);
@@ -29,14 +32,34 @@ class PanelDrawerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (details) {
-        int index = 0;
+        int? index;
         final touchOffset = details.localPosition;
 
         for (int i = 0; i < panels.length; i++) {
           final offset = panels[i];
+
+          var renderOffset = Offset(offset.dx * panelSize, offset.dy * panelSize);
+
+          List<Offset> vertices = [];
+
+          if ((offset.dy == 1 && offset.dx % 2 == 0) || (offset.dy == 0 && offset.dx % 2 == 1)) {
+            renderOffset = Offset(renderOffset.dx - (panelSize / 2) * offset.dx, renderOffset.dy);
+            vertices.add(Offset(0 + renderOffset.dx, panelSize + renderOffset.dy));
+            vertices.add(Offset((panelSize / 2) + renderOffset.dx, (panelSize - sqrt(pow(panelSize, 2) - pow(panelSize / 2, 2))) + renderOffset.dy));
+            vertices.add(Offset(panelSize + renderOffset.dx, panelSize + renderOffset.dy));
+          } else {
+            renderOffset = Offset(renderOffset.dx - (panelSize / 2) * offset.dx, renderOffset.dy);
+            vertices.add(Offset(0 + renderOffset.dx, renderOffset.dy));
+            vertices.add(Offset((panelSize / 2) + renderOffset.dx, (sqrt(pow(panelSize, 2) - pow(panelSize / 2, 2))) + renderOffset.dy));
+            vertices.add(Offset(panelSize + renderOffset.dx, renderOffset.dy));
+          }
+
+          if (Poly.isPointInPolygon(Point(x: touchOffset.dx, y: touchOffset.dy), vertices.map((e) => Point(x: e.dx, y: e.dy)).toList())) {
+            index = i;
+          }
         }
 
-        onSelect(index);
+        if (index != null) onSelect(index);
       },
       child: CustomPaint(
         size: const Size(panelSize * 6 - panelSize, panelSize * 2),
