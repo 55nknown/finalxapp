@@ -10,6 +10,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FinalX',
+      theme: ThemeData(scaffoldBackgroundColor: Colors.grey[100]),
       home: BeginScreen(),
     );
   }

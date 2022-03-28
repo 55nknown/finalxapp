@@ -3,67 +3,95 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class PanelDrawerWidget extends StatelessWidget {
-  const PanelDrawerWidget({Key? key}) : super(key: key);
+  const PanelDrawerWidget({Key? key, required this.onSelect, required this.selectedIndex}) : super(key: key);
+
+  static const panelSize = 80.0;
+  static const panels = [
+    // line 1
+    Offset(0, 1),
+    Offset(1, 1),
+    Offset(2, 1),
+    Offset(3, 1),
+
+    // line 2
+    Offset(3, 0),
+    Offset(4, 0),
+    Offset(5, 0),
+    Offset(6, 0),
+    Offset(7, 0),
+    Offset(8, 0),
+  ];
+
+  final int selectedIndex;
+  final void Function(int) onSelect;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (details) {
-        print(details.localPosition);
+        int index = 0;
+        final touchOffset = details.localPosition;
+
+        for (int i = 0; i < panels.length; i++) {
+          final offset = panels[i];
+        }
+
+        onSelect(index);
       },
       child: CustomPaint(
-        size: const Size(75 * 6, 75 * 2),
-        painter: DrawTriangle(),
+        size: const Size(panelSize * 6 - panelSize, panelSize * 2),
+        painter: DrawTriangle(panelSize: panelSize, selectedIndex: selectedIndex, panels: panels),
       ),
     );
   }
 }
 
 class DrawTriangle extends CustomPainter {
-  late Paint painter;
+  final double strokeWidth;
+  final double panelSize;
+  final int selectedIndex;
+  final List<Offset> panels;
 
-  DrawTriangle() {
-    painter = Paint()
-      ..color = Colors.orange
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12.0
-      ..strokeJoin = StrokeJoin.bevel;
-  }
+  DrawTriangle({
+    this.strokeWidth = 5.0,
+    this.panelSize = 50.0,
+    this.panels = const [],
+    required this.selectedIndex,
+  });
 
-  void paintPanel(Path path, Offset offset) {
-    const panelSize = 75.0;
-
-    path.moveTo(0, panelSize);
-    path.lineTo(panelSize / 2, panelSize - sqrt(pow(panelSize, 2) - pow(panelSize / 2, 2)));
-    path.lineTo(panelSize, panelSize);
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
+  void paintPanel(int index, Canvas canvas, Offset offset, {bool fill = false}) {
     var path = Path();
+    final painter = Paint()
+      ..color = fill ? Colors.grey.withOpacity(.5) : Colors.orange
+      ..style = fill ? PaintingStyle.fill : PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeJoin = StrokeJoin.bevel;
+    var renderOffset = Offset(offset.dx * panelSize, offset.dy * panelSize);
 
-    final panels = [
-      // line 1
-      const Offset(1, 0),
-      const Offset(1, 1),
-      const Offset(1, 2),
-      const Offset(1, 3),
-
-      // line 2
-      const Offset(0, 3),
-      const Offset(0, 4),
-      const Offset(0, 5),
-      const Offset(0, 6),
-      const Offset(0, 7),
-      const Offset(0, 8),
-    ];
-
-    for (var offset in panels) {
-      paintPanel(path, offset);
+    if ((offset.dy == 1 && offset.dx % 2 == 0) || (offset.dy == 0 && offset.dx % 2 == 1)) {
+      renderOffset = Offset(renderOffset.dx - (panelSize / 2) * offset.dx, renderOffset.dy);
+      path.moveTo(0 + renderOffset.dx, panelSize + renderOffset.dy);
+      path.lineTo((panelSize / 2) + renderOffset.dx, (panelSize - sqrt(pow(panelSize, 2) - pow(panelSize / 2, 2))) + renderOffset.dy);
+      path.lineTo(panelSize + renderOffset.dx, panelSize + renderOffset.dy);
+    } else {
+      renderOffset = Offset(renderOffset.dx - (panelSize / 2) * offset.dx, renderOffset.dy + strokeWidth);
+      path.moveTo(0 + renderOffset.dx, renderOffset.dy);
+      path.lineTo((panelSize / 2) + renderOffset.dx, (sqrt(pow(panelSize, 2) - pow(panelSize / 2, 2))) + renderOffset.dy);
+      path.lineTo(panelSize + renderOffset.dx, renderOffset.dy);
     }
 
     path.close();
     canvas.drawPath(path, painter);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (int index = 0; index < panels.length; index++) {
+      if (index == selectedIndex) {
+        paintPanel(index, canvas, panels[index], fill: true);
+      }
+      paintPanel(index, canvas, panels[index]);
+    }
   }
 
   @override
